@@ -1,0 +1,9 @@
+version: '3.8'
+
+services:
+  simulador:
+    build: .
+    container_name: simulador_amortizacao
+    ports:
+      - "8080:80"
+    restart: always
