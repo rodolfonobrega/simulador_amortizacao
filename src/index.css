@@ -713,21 +713,49 @@ tr:hover td {
 
 .chart-toggle {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 6px;
   font-size: 0.82rem;
   cursor: pointer;
   user-select: none;
+  min-width: 230px;
 }
 
 .chart-toggle input[type="checkbox"] {
   cursor: pointer;
+  margin-top: 2px;
+}
+
+.chart-toggle__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.chart-toggle__title {
+  font-weight: 700;
+  color: currentColor;
+}
+
+.chart-toggle__hint {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  line-height: 1.25;
 }
 
 .chart-toggles__divider {
   width: 100%;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
   margin: 4px 0;
+}
+
+.chart-legend-note {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  line-height: 1.4;
 }
 
 /* =============================================

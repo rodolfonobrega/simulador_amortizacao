@@ -53,9 +53,23 @@ export interface StrategyRule {
   parcelasPagas?: number[];
 }
 
+export interface StrategyFormState {
+  activeTab: 'recorrente' | 'pontual';
+  recValor: number;
+  recInicio: number | '';
+  recFim: number | '';
+  recIntervalo: number | '';
+  recIntervaloTipo: 'meses' | 'anos';
+  recReducao: 'PRAZO' | 'PARCELA';
+  pontValor: number;
+  pontMes: number | '';
+  pontReducao: 'PRAZO' | 'PARCELA';
+}
+
 export interface SimulatorState {
   rawParams: typeof defaultRawParams;
   strategies: StrategyRule[];
+  strategyForm: StrategyFormState;
   aporteRecorrente: RecurringPaymentRule;
   quickSimulation: QuickSimulationParams;
   investimento: InvestmentParams;
@@ -109,6 +123,18 @@ export const defaultFgtsParams: FGTSParams = {
 export const defaultSimulatorState: SimulatorState = {
   rawParams: defaultRawParams,
   strategies: [],
+  strategyForm: {
+    activeTab: 'recorrente',
+    recValor: 0,
+    recInicio: 1,
+    recFim: 420,
+    recIntervalo: 1,
+    recIntervaloTipo: 'meses',
+    recReducao: 'PRAZO',
+    pontValor: 0,
+    pontMes: 1,
+    pontReducao: 'PRAZO',
+  },
   aporteRecorrente: defaultAporteRecorrente,
   quickSimulation: defaultQuickSimulation,
   investimento: defaultInvestimento,
@@ -145,7 +171,19 @@ function getInitialState(): SimulatorState {
     idadeInicial: loaded.params?.idadeInicial ?? defaultRawParams.idadeInicial,
   };
 
-  let strategies: StrategyRule[] = loaded.strategies || [];
+  let strategies: StrategyRule[] = (loaded.strategies || []).filter((strategy: StrategyRule) => !strategy.id.startsWith('mock-'));
+  const strategyForm: StrategyFormState = {
+    activeTab: loaded.strategyForm?.activeTab ?? defaultSimulatorState.strategyForm.activeTab,
+    recValor: loaded.strategyForm?.recValor ?? defaultSimulatorState.strategyForm.recValor,
+    recInicio: loaded.strategyForm?.recInicio ?? defaultSimulatorState.strategyForm.recInicio,
+    recFim: loaded.strategyForm?.recFim ?? defaultSimulatorState.strategyForm.recFim,
+    recIntervalo: loaded.strategyForm?.recIntervalo ?? defaultSimulatorState.strategyForm.recIntervalo,
+    recIntervaloTipo: loaded.strategyForm?.recIntervaloTipo ?? defaultSimulatorState.strategyForm.recIntervaloTipo,
+    recReducao: loaded.strategyForm?.recReducao ?? defaultSimulatorState.strategyForm.recReducao,
+    pontValor: loaded.strategyForm?.pontValor ?? defaultSimulatorState.strategyForm.pontValor,
+    pontMes: loaded.strategyForm?.pontMes ?? defaultSimulatorState.strategyForm.pontMes,
+    pontReducao: loaded.strategyForm?.pontReducao ?? defaultSimulatorState.strategyForm.pontReducao,
+  };
   
   if (strategies.length === 0 && loaded.params?.aportes) {
     loaded.params.aportes.forEach((ap: any, idx: number) => {
@@ -160,50 +198,10 @@ function getInitialState(): SimulatorState {
     });
   }
 
-  if (strategies.length === 0) {
-    strategies = [
-      {
-        id: 'mock-recorrente-1',
-        type: 'recorrente',
-        value: 10000,
-        mesInicio: 12,
-        mesFim: 420,
-        intervalo: 6,
-        tipoReducao: 'PRAZO',
-        configText: 'Do mês 12 ao 420 a cada 6 meses'
-      },
-      {
-        id: 'mock-recorrente-2',
-        type: 'recorrente',
-        value: 5000,
-        mesInicio: 24,
-        mesFim: 420,
-        intervalo: 12,
-        tipoReducao: 'PARCELA',
-        configText: 'Do mês 24 ao 420 a cada 12 meses'
-      },
-      {
-        id: 'mock-pontual-3',
-        type: 'pontual',
-        value: 20000,
-        mesInicio: 36,
-        tipoReducao: 'PRAZO',
-        configText: 'Mês 36'
-      },
-      {
-        id: 'mock-pontual-4',
-        type: 'pontual',
-        value: 15000,
-        mesInicio: 60,
-        tipoReducao: 'PARCELA',
-        configText: 'Mês 60'
-      }
-    ];
-  }
-
   return {
     rawParams,
     strategies,
+    strategyForm,
     aporteRecorrente: {
       ...defaultAporteRecorrente,
       ...(loaded.aporteRecorrente ?? {}),
@@ -221,6 +219,7 @@ export function useSimulatorState() {
 
   const [rawParams, setRawParams] = useState<typeof defaultRawParams>(initialState.rawParams);
   const [strategies, setStrategies] = useState<StrategyRule[]>(initialState.strategies);
+  const [strategyForm, setStrategyForm] = useState<StrategyFormState>(initialState.strategyForm);
   const [aporteRecorrente, setAporteRecorrente] = useState<RecurringPaymentRule>(initialState.aporteRecorrente);
   const [quickSimulation, setQuickSimulation] = useState<QuickSimulationParams>(initialState.quickSimulation);
   const [novoAporte, setNovoAporte] = useState<ExtraPayment>({ mes: 1, valor: 10000, tipoReducao: 'PRAZO' });
@@ -233,6 +232,7 @@ export function useSimulatorState() {
   const [selectedProfileId, setSelectedProfileId] = useState('');
   
   const [activeMainTab, setActiveMainTab] = useState<'visao_geral' | 'simulacao' | 'parametros'>('parametros');
+  const [activeSimulationTab, setActiveSimulationTab] = useState<'investimento' | 'fgts'>('investimento');
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
 
   const [aporteError, setAporteError] = useState('');
@@ -301,13 +301,14 @@ export function useSimulatorState() {
   const currentState = useMemo<SimulatorState>(() => ({
     rawParams,
     strategies,
+    strategyForm,
     aporteRecorrente,
     quickSimulation,
     investimento,
     upfrontParams,
     incluirSeguros,
     fgtsParams
-  }), [rawParams, strategies, aporteRecorrente, quickSimulation, investimento, upfrontParams, incluirSeguros, fgtsParams]);
+  }), [rawParams, strategies, strategyForm, aporteRecorrente, quickSimulation, investimento, upfrontParams, incluirSeguros, fgtsParams]);
 
   const syncTextInputs = (state: SimulatorState) => {
     setInputPrazo(state.rawParams.prazoMeses.toString());
@@ -329,6 +330,18 @@ export function useSimulatorState() {
   const applySimulatorState = (state: SimulatorState) => {
     setRawParams({ ...defaultRawParams, ...state.rawParams });
     setStrategies(state.strategies || []);
+    setStrategyForm({
+      activeTab: state.strategyForm?.activeTab ?? defaultSimulatorState.strategyForm.activeTab,
+      recValor: state.strategyForm?.recValor ?? defaultSimulatorState.strategyForm.recValor,
+      recInicio: state.strategyForm?.recInicio ?? defaultSimulatorState.strategyForm.recInicio,
+      recFim: state.strategyForm?.recFim ?? defaultSimulatorState.strategyForm.recFim,
+      recIntervalo: state.strategyForm?.recIntervalo ?? defaultSimulatorState.strategyForm.recIntervalo,
+      recIntervaloTipo: state.strategyForm?.recIntervaloTipo ?? defaultSimulatorState.strategyForm.recIntervaloTipo,
+      recReducao: state.strategyForm?.recReducao ?? defaultSimulatorState.strategyForm.recReducao,
+      pontValor: state.strategyForm?.pontValor ?? defaultSimulatorState.strategyForm.pontValor,
+      pontMes: state.strategyForm?.pontMes ?? defaultSimulatorState.strategyForm.pontMes,
+      pontReducao: state.strategyForm?.pontReducao ?? defaultSimulatorState.strategyForm.pontReducao,
+    });
     setAporteRecorrente({ ...defaultAporteRecorrente, ...state.aporteRecorrente });
     setQuickSimulation({ ...defaultQuickSimulation, ...state.quickSimulation });
     setInvestimento({ ...defaultInvestimento, ...state.investimento });
@@ -639,6 +652,11 @@ export function useSimulatorState() {
       id: `${rule.type}-${Date.now()}`
     };
     setStrategies(prev => [...prev, newRule]);
+    setStrategyForm(prev => ({
+      ...prev,
+      recValor: 0,
+      pontValor: 0,
+    }));
     showToast('Estratégia adicionada com sucesso.', 'success');
   };
 
@@ -655,6 +673,46 @@ export function useSimulatorState() {
   const handleClearAllStrategies = () => {
     setStrategies([]);
     showToast('Todas as estratégias foram removidas.', 'info');
+  };
+
+  const setStrategyActiveTab = (tab: StrategyFormState['activeTab']) => {
+    setStrategyForm(prev => ({ ...prev, activeTab: tab }));
+  };
+
+  const setStrategyRecValor = (value: number) => {
+    setStrategyForm(prev => ({ ...prev, recValor: value }));
+  };
+
+  const setStrategyRecInicio = (value: number | '') => {
+    setStrategyForm(prev => ({ ...prev, recInicio: value }));
+  };
+
+  const setStrategyRecFim = (value: number | '') => {
+    setStrategyForm(prev => ({ ...prev, recFim: value }));
+  };
+
+  const setStrategyRecIntervalo = (value: number | '') => {
+    setStrategyForm(prev => ({ ...prev, recIntervalo: value }));
+  };
+
+  const setStrategyRecIntervaloTipo = (value: 'meses' | 'anos') => {
+    setStrategyForm(prev => ({ ...prev, recIntervaloTipo: value }));
+  };
+
+  const setStrategyRecReducao = (value: 'PRAZO' | 'PARCELA') => {
+    setStrategyForm(prev => ({ ...prev, recReducao: value }));
+  };
+
+  const setStrategyPontValor = (value: number) => {
+    setStrategyForm(prev => ({ ...prev, pontValor: value }));
+  };
+
+  const setStrategyPontMes = (value: number | '') => {
+    setStrategyForm(prev => ({ ...prev, pontMes: value }));
+  };
+
+  const setStrategyPontReducao = (value: 'PRAZO' | 'PARCELA') => {
+    setStrategyForm(prev => ({ ...prev, pontReducao: value }));
   };
 
   const handlePrazoChange = (val: string) => {
@@ -877,6 +935,17 @@ export function useSimulatorState() {
     rawParams, setRawParams,
     params,
     strategies: strategiesWithImpact,
+    strategyForm,
+    setStrategyActiveTab,
+    setStrategyRecValor,
+    setStrategyRecInicio,
+    setStrategyRecFim,
+    setStrategyRecIntervalo,
+    setStrategyRecIntervaloTipo,
+    setStrategyRecReducao,
+    setStrategyPontValor,
+    setStrategyPontMes,
+    setStrategyPontReducao,
     addStrategy,
     removeStrategy,
     handleClearAllStrategies,
@@ -891,6 +960,7 @@ export function useSimulatorState() {
     profileName, setProfileName,
     selectedProfileId, setSelectedProfileId,
     activeMainTab, setActiveMainTab,
+    activeSimulationTab, setActiveSimulationTab,
     toast, showToast,
     
     // Erros

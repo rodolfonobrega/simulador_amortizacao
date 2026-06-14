@@ -61,10 +61,10 @@ function AppContent() {
     handleSaveProfile, handleLoadProfile, handleResetState,
     
     // Inputs sincronizados de parâmetros
-    inputPrazo,
-    inputJuros,
-    inputTR,
-    inputIdade,
+    inputPrazo, handlePrazoChange,
+    inputJuros, handleJurosChange,
+    inputTR, handleTRChange,
+    inputIdade, handleIdadeChange,
     incluirSeguros, setIncluirSeguros,
   } = useSimulator();
 
@@ -81,27 +81,6 @@ function AppContent() {
       return `Equivale a ${converted.toFixed(2).replace('.', ',')}% a.a.`;
     }
   }, [rawParams.taxaJuros, rawParams.taxaJurosTipo]);
-
-  const handlePrazoChange = (val: string) => {
-    setRawParams((p: any) => ({ ...p, prazoMeses: parseInt(val) || p.prazoMeses }));
-  };
-
-  const handleJurosChange = (val: string) => {
-    const num = parseFloat(val.replace(',', '.'));
-    if (!isNaN(num)) setRawParams((p: any) => ({ ...p, taxaJuros: num }));
-  };
-
-  const handleTRChange = (val: string) => {
-    const num = parseFloat(val.replace(',', '.'));
-    if (!isNaN(num)) setRawParams((p: any) => ({ ...p, taxaTRMensalEstimada: num }));
-  };
-
-  const handleIdadeChange = (val: string) => {
-    setRawParams((p: any) => ({ ...p, idadeInicial: parseInt(val) || p.idadeInicial }));
-  };
-
-
-
 
   return (
     <AppLayout>
@@ -154,7 +133,7 @@ function AppContent() {
                   <input
                     type="text"
                     className="input-control"
-                    defaultValue={inputPrazo}
+                    value={inputPrazo}
                     onChange={e => handlePrazoChange(e.target.value)}
                   />
                 </div>
@@ -167,7 +146,7 @@ function AppContent() {
                     <input
                       type="text"
                       className="input-control"
-                      defaultValue={inputJuros}
+                      value={inputJuros}
                       onChange={e => handleJurosChange(e.target.value)}
                     />
                     <select 
@@ -224,7 +203,7 @@ function AppContent() {
                   <input
                     type="text"
                     className="input-control"
-                    defaultValue={inputTR}
+                    value={inputTR}
                     onChange={e => handleTRChange(e.target.value)}
                   />
                 </div>
@@ -266,7 +245,7 @@ function AppContent() {
                   <input
                     type="text"
                     className="input-control"
-                    defaultValue={inputIdade}
+                    value={inputIdade}
                     onChange={e => handleIdadeChange(e.target.value)}
                   />
                 </div>

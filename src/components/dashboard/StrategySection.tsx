@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { useSimulator } from '../../context/SimulatorContext';
+﻿import { useSimulator } from '../../context/SimulatorContext';
 import { 
   Repeat, 
   ArrowUpRight, 
@@ -35,22 +34,32 @@ export function StrategySection() {
     addStrategy, 
     removeStrategy, 
     handleClearAllStrategies,
-    rawParams
+    rawParams,
+    strategyForm,
+    setStrategyActiveTab,
+    setStrategyRecValor,
+    setStrategyRecInicio,
+    setStrategyRecFim,
+    setStrategyRecIntervalo,
+    setStrategyRecIntervaloTipo,
+    setStrategyRecReducao,
+    setStrategyPontValor,
+    setStrategyPontMes,
+    setStrategyPontReducao,
   } = useSimulator();
 
-  const [activeTab, setActiveTab] = useState<'recorrente' | 'pontual'>('recorrente');
-
-  // Estados locais para formulário
-  const [recValor, setRecValor] = useState(0);
-  const [recInicio, setRecInicio] = useState<number | ''>(1);
-  const [recFim, setRecFim] = useState<number | ''>(rawParams.prazoMeses);
-  const [recIntervalo, setRecIntervalo] = useState<number | ''>(1);
-  const [recIntervaloTipo, setRecIntervaloTipo] = useState<'meses' | 'anos'>('meses');
-  const [recReducao, setRecReducao] = useState<'PRAZO' | 'PARCELA'>('PRAZO');
-
-  const [pontValor, setPontValor] = useState(0);
-  const [pontMes, setPontMes] = useState<number | ''>(1);
-  const [pontReducao, setPontReducao] = useState<'PRAZO' | 'PARCELA'>('PRAZO');
+  const {
+    activeTab,
+    recValor,
+    recInicio,
+    recFim,
+    recIntervalo,
+    recIntervaloTipo,
+    recReducao,
+    pontValor,
+    pontMes,
+    pontReducao,
+  } = strategyForm;
 
   const handleAddRecorrente = () => {
     if (recValor <= 0) return;
@@ -70,7 +79,7 @@ export function StrategySection() {
     });
 
     // Reset
-    setRecValor(0);
+    setStrategyRecValor(0);
   };
 
   // Adicionar pontual
@@ -86,23 +95,23 @@ export function StrategySection() {
     });
 
     // Reset
-    setPontValor(0);
+    setStrategyPontValor(0);
   };
 
   // Editar estratégia
   const handleEdit = (strategy: StrategyRule) => {
     removeStrategy(strategy.id);
-    setActiveTab(strategy.type);
+    setStrategyActiveTab(strategy.type);
     if (strategy.type === 'recorrente') {
-      setRecValor(strategy.value || 0);
-      setRecInicio(strategy.mesInicio || 1);
-      setRecFim(strategy.mesFim || rawParams.prazoMeses);
-      setRecIntervalo(strategy.intervalo || 1);
-      setRecReducao(strategy.tipoReducao || 'PRAZO');
+      setStrategyRecValor(strategy.value || 0);
+      setStrategyRecInicio(strategy.mesInicio || 1);
+      setStrategyRecFim(strategy.mesFim || rawParams.prazoMeses);
+      setStrategyRecIntervalo(strategy.intervalo || 1);
+      setStrategyRecReducao(strategy.tipoReducao || 'PRAZO');
     } else if (strategy.type === 'pontual') {
-      setPontValor(strategy.value || 0);
-      setPontMes(strategy.mesInicio || 1);
-      setPontReducao(strategy.tipoReducao || 'PRAZO');
+      setStrategyPontValor(strategy.value || 0);
+      setStrategyPontMes(strategy.mesInicio || 1);
+      setStrategyPontReducao(strategy.tipoReducao || 'PRAZO');
     }
   };
 
@@ -113,14 +122,14 @@ export function StrategySection() {
         <div className="strategy-tabs-nav">
           <button 
             className={`strategy-tab-btn ${activeTab === 'recorrente' ? 'active' : ''}`}
-            onClick={() => setActiveTab('recorrente')}
+            onClick={() => setStrategyActiveTab('recorrente')}
           >
             <Repeat size={16} />
             <span>Amortização recorrente</span>
           </button>
           <button 
             className={`strategy-tab-btn ${activeTab === 'pontual' ? 'active' : ''}`}
-            onClick={() => setActiveTab('pontual')}
+            onClick={() => setStrategyActiveTab('pontual')}
           >
             <ArrowUpRight size={16} />
             <span>Amortização pontual</span>
@@ -135,7 +144,7 @@ export function StrategySection() {
                   <label>Valor</label>
                   <CurrencyInput 
                     value={recValor} 
-                    onChange={setRecValor} 
+                    onChange={setStrategyRecValor} 
                     className="input-control" 
                   />
                 </div>
@@ -147,7 +156,7 @@ export function StrategySection() {
                     value={recInicio} 
                     onChange={(e) => {
                       const v = e.target.value;
-                      setRecInicio(v === '' ? '' : (parseInt(v, 10) || 1));
+                      setStrategyRecInicio(v === '' ? '' : (parseInt(v, 10) || 1));
                     }} 
                     className="input-control" 
                   />
@@ -160,7 +169,7 @@ export function StrategySection() {
                     value={recFim} 
                     onChange={(e) => {
                       const v = e.target.value;
-                      setRecFim(v === '' ? '' : (parseInt(v, 10) || rawParams.prazoMeses));
+                      setStrategyRecFim(v === '' ? '' : (parseInt(v, 10) || rawParams.prazoMeses));
                     }} 
                     className="input-control" 
                   />
@@ -174,14 +183,14 @@ export function StrategySection() {
                       value={recIntervalo} 
                       onChange={(e) => {
                         const v = e.target.value;
-                        setRecIntervalo(v === '' ? '' : (parseInt(v, 10) || 1));
+                        setStrategyRecIntervalo(v === '' ? '' : (parseInt(v, 10) || 1));
                       }} 
                       className="input-control" 
                     />
                     <select 
                       className="input-control input-control--sm" 
                       value={recIntervaloTipo}
-                      onChange={(e) => setRecIntervaloTipo(e.target.value as 'meses' | 'anos')}
+                      onChange={(e) => setStrategyRecIntervaloTipo(e.target.value as 'meses' | 'anos')}
                     >
                       <option value="meses">Mês(es)</option>
                       <option value="anos">Ano(s)</option>
@@ -193,7 +202,7 @@ export function StrategySection() {
                   <select 
                     className="input-control" 
                     value={recReducao} 
-                    onChange={(e) => setRecReducao(e.target.value as 'PRAZO' | 'PARCELA')}
+                    onChange={(e) => setStrategyRecReducao(e.target.value as 'PRAZO' | 'PARCELA')}
                   >
                     <option value="PRAZO">Prazo</option>
                     <option value="PARCELA">Parcela</option>
@@ -216,7 +225,7 @@ export function StrategySection() {
                   <label>Valor</label>
                   <CurrencyInput 
                     value={pontValor} 
-                    onChange={setPontValor} 
+                    onChange={setStrategyPontValor} 
                     className="input-control" 
                   />
                 </div>
@@ -228,7 +237,7 @@ export function StrategySection() {
                     value={pontMes} 
                     onChange={(e) => {
                       const v = e.target.value;
-                      setPontMes(v === '' ? '' : (parseInt(v, 10) || 1));
+                      setStrategyPontMes(v === '' ? '' : (parseInt(v, 10) || 1));
                     }} 
                     className="input-control" 
                   />
@@ -238,7 +247,7 @@ export function StrategySection() {
                   <select 
                     className="input-control" 
                     value={pontReducao} 
-                    onChange={(e) => setPontReducao(e.target.value as 'PRAZO' | 'PARCELA')}
+                    onChange={(e) => setStrategyPontReducao(e.target.value as 'PRAZO' | 'PARCELA')}
                   >
                     <option value="PRAZO">Prazo</option>
                     <option value="PARCELA">Parcela</option>
@@ -354,3 +363,9 @@ export function StrategySection() {
     </div>
   );
 }
+
+
+
+
+
+

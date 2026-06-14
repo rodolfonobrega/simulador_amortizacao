@@ -4,9 +4,9 @@ import { type AmortizationParams } from '../engine/amortization';
 import { useSimulator } from '../context/SimulatorContext';
 import { simulateFGTS, computeFGTSCostOfOpportunity } from '../engine/fgts';
 import { formatCurrency } from '../utils/formatters';
-import { PiggyBank, CheckCircle, Download } from 'lucide-react';
+import { PiggyBank, CheckCircle, Download, Info } from 'lucide-react';
 import {
-  ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend
+  ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip
 } from 'recharts';
 
 export interface FGTSWinnerInfo {
@@ -27,9 +27,38 @@ interface FGTSSimulatorProps {
 function formatMonthsToYears(months: number): string {
   const years = Math.floor(months / 12);
   const remaining = Math.round(months % 12);
-  if (years === 0) return `${remaining} meses`;
-  if (remaining === 0) return `${years} anos`;
-  return `${years} anos e ${remaining} meses`;
+  
+  const yearsStr = years === 1 ? '1 ano' : `${years} anos`;
+  const monthsStr = remaining === 1 ? '1 mês' : `${remaining} meses`;
+
+  if (years === 0) return monthsStr;
+  if (remaining === 0) return yearsStr;
+  return `${yearsStr} e ${monthsStr}`;
+}
+
+const custoRealDoBolsoTooltip =
+  'Quanto efetivamente saiu do seu bolso: parcelas mensais + capital do FGTS comprometido (depósitos + saldo inicial), descontando o saldo total de FGTS restante (capital + rendimento). O rendimento do FGTS é descontado automaticamente, pois nunca saiu do seu bolso — aparece no saldo restante ou reduziu seu capital comprometido líquido.';
+
+const totalDesembolsadoTooltip =
+  'Soma de tudo que foi usado para pagar a dívida: parcelas mensais ao banco + valor do FGTS sacado e aplicado como amortização.';
+
+const parcelasAoBancoTooltip =
+  'Soma de todas as parcelas mensais pagas diretamente com dinheiro do seu bolso/conta corrente (não inclui o FGTS, que é um fundo separado).';
+
+const fgtsChartLabels = {
+  debtA: 'Dívida restante - Amortizar periodicamente',
+  debtB: 'Dívida restante - Acumular e quitar',
+  paidA: 'Desembolso acumulado - Amortizar periodicamente',
+  paidB: 'Desembolso acumulado - Acumular e quitar',
+};
+
+function InfoTooltip({ content }: { content: string }) {
+  return (
+    <span className="tooltip-trigger" tabIndex={0}>
+      <Info size={14} className="text-secondary" style={{ marginLeft: '6px', verticalAlign: 'middle', opacity: 0.8 }} />
+      <span className="tooltip-content">{content}</span>
+    </span>
+  );
 }
 
 export function FGTSSimulator({ amortizationParams, onWinnerChange }: FGTSSimulatorProps) {
@@ -105,10 +134,10 @@ export function FGTSSimulator({ amortizationParams, onWinnerChange }: FGTSSimula
 
       data.push({
         mes: m,
-        'Estratégia A (Dívida)': debtA,
-        'Estratégia B (Dívida)': debtB,
-        'Estratégia A (Pago)': lookupPaid(paidA, lastMesA, m),
-        'Estratégia B (Pago)': lookupPaid(paidB, lastMesB, m),
+        [fgtsChartLabels.debtA]: debtA,
+        [fgtsChartLabels.debtB]: debtB,
+        [fgtsChartLabels.paidA]: lookupPaid(paidA, lastMesA, m),
+        [fgtsChartLabels.paidB]: lookupPaid(paidB, lastMesB, m),
       });
     }
 
@@ -168,7 +197,7 @@ export function FGTSSimulator({ amortizationParams, onWinnerChange }: FGTSSimula
     });
 
     const csv = [headers, ...rows].join('\n');
-    const bom = '﻿';
+    const bom = '\uFEFF';
     const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -264,21 +293,38 @@ export function FGTSSimulator({ amortizationParams, onWinnerChange }: FGTSSimula
           <div className="chart-toggles__label">Visualizar no Gráfico:</div>
           <label className="chart-toggle" style={{ color: '#3b82f6' }}>
             <input type="checkbox" checked={chartLinesVisibility.debtA} onChange={e => setChartLinesVisibility(prev => ({ ...prev, debtA: e.target.checked }))} />
-            Estratégia A (Dívida)
+            <span className="chart-toggle__text">
+              <span className="chart-toggle__title">Dívida restante</span>
+              <span className="chart-toggle__hint">Amortizar FGTS a cada {fgtsParams.cicloMeses} meses</span>
+            </span>
           </label>
           <label className="chart-toggle" style={{ color: '#f59e0b' }}>
             <input type="checkbox" checked={chartLinesVisibility.debtB} onChange={e => setChartLinesVisibility(prev => ({ ...prev, debtB: e.target.checked }))} />
-            Estratégia B (Dívida)
+            <span className="chart-toggle__text">
+              <span className="chart-toggle__title">Dívida restante</span>
+              <span className="chart-toggle__hint">Acumular FGTS e quitar no final</span>
+            </span>
           </label>
           <div className="chart-toggles__divider" />
           <label className="chart-toggle" style={{ color: 'var(--success-color)' }}>
             <input type="checkbox" checked={chartLinesVisibility.paidA} onChange={e => setChartLinesVisibility(prev => ({ ...prev, paidA: e.target.checked }))} />
-            Estratégia A (Desembolso Acumulado)
+            <span className="chart-toggle__text">
+              <span className="chart-toggle__title">Desembolso acumulado</span>
+              <span className="chart-toggle__hint">Parcelas + FGTS usado periodicamente</span>
+            </span>
           </label>
           <label className="chart-toggle" style={{ color: '#a855f7' }}>
             <input type="checkbox" checked={chartLinesVisibility.paidB} onChange={e => setChartLinesVisibility(prev => ({ ...prev, paidB: e.target.checked }))} />
-            Estratégia B (Desembolso Acumulado)
+            <span className="chart-toggle__text">
+              <span className="chart-toggle__title">Desembolso acumulado</span>
+              <span className="chart-toggle__hint">Parcelas + FGTS usado na quitação</span>
+            </span>
           </label>
+          <div className="chart-toggles__divider" />
+          <div className="chart-legend-note">
+            <span><strong>Linhas contínuas:</strong> saldo devedor que ainda falta pagar.</span>
+            <span><strong>Linhas em degraus:</strong> total acumulado pago ou usado para amortizar.</span>
+          </div>
         </div>
 
         <div style={{ height: '260px', width: '100%' }}>
@@ -307,27 +353,21 @@ export function FGTSSimulator({ amortizationParams, onWinnerChange }: FGTSSimula
               <Tooltip
                 labelFormatter={(label: any) => `Mês ${label}`}
                 formatter={(value: any, name: any) => {
-                  const nameStr = String(name || '');
-                  const abv = nameStr
-                    .replace('Estratégia ', '')
-                    .replace(' (Dívida)', ' Dív')
-                    .replace(' (Desembolso Acumulado)', ' Des');
-                  return [formatCurrency(Number(value || 0)), abv];
+                  return [formatCurrency(Number(value || 0)), String(name || '')];
                 }}
                 contentStyle={{ backgroundColor: 'var(--panel-bg)', borderColor: 'var(--panel-border)', color: 'var(--text-primary)', fontSize: '12px' }}
               />
-              <Legend wrapperStyle={{ fontSize: '12px' }} />
               {chartLinesVisibility.debtA && (
-                <Line yAxisId="debt" type="linear" dataKey="Estratégia A (Dívida)" stroke="#3b82f6" strokeWidth={2.5} dot={false} activeDot={{ r: 5 }} connectNulls={false} name="Estratégia A (Dívida)" />
+                <Line yAxisId="debt" type="linear" dataKey={fgtsChartLabels.debtA} stroke="#3b82f6" strokeWidth={2.5} dot={false} activeDot={{ r: 5 }} connectNulls={false} name={fgtsChartLabels.debtA} />
               )}
               {chartLinesVisibility.debtB && (
-                <Line yAxisId="debt" type="linear" dataKey="Estratégia B (Dívida)" stroke="#f59e0b" strokeWidth={2.5} dot={false} activeDot={{ r: 5 }} connectNulls={false} name="Estratégia B (Dívida)" />
+                <Line yAxisId="debt" type="linear" dataKey={fgtsChartLabels.debtB} stroke="#f59e0b" strokeWidth={2.5} dot={false} activeDot={{ r: 5 }} connectNulls={false} name={fgtsChartLabels.debtB} />
               )}
               {chartLinesVisibility.paidA && (
-                <Line yAxisId="paid" type="stepAfter" dataKey="Estratégia A (Pago)" stroke="var(--success-color)" strokeWidth={2} dot={false} connectNulls={false} name="Estratégia A (Desembolso Acumulado)" />
+                <Line yAxisId="paid" type="stepAfter" dataKey={fgtsChartLabels.paidA} stroke="var(--success-color)" strokeWidth={2} dot={false} connectNulls={false} name={fgtsChartLabels.paidA} />
               )}
               {chartLinesVisibility.paidB && (
-                <Line yAxisId="paid" type="stepAfter" dataKey="Estratégia B (Pago)" stroke="#a855f7" strokeWidth={2} dot={false} connectNulls={false} name="Estratégia B (Desembolso Acumulado)" />
+                <Line yAxisId="paid" type="stepAfter" dataKey={fgtsChartLabels.paidB} stroke="#a855f7" strokeWidth={2} dot={false} connectNulls={false} name={fgtsChartLabels.paidB} />
               )}
             </LineChart>
           </ResponsiveContainer>
@@ -347,19 +387,21 @@ export function FGTSSimulator({ amortizationParams, onWinnerChange }: FGTSSimula
           <div className="strategy-card__stats">
             <p className="flex-between">
               <span>Quita em:</span>
-              <strong className="text-success">{result.estrategiaA.mesesTotal} meses</strong>
+              <strong className="text-success">
+                {formatMonthsToYears(result.estrategiaA.mesesTotal)} <span style={{ fontWeight: 400, fontSize: '0.85em', opacity: 0.85 }}>({result.estrategiaA.mesesTotal} meses)</span>
+              </strong>
             </p>
             <p className="flex-between">
               <span>Juros totais:</span>
               <strong>{formatCurrency(result.estrategiaA.jurosTotal)}</strong>
             </p>
             <p className="flex-between">
-              <span>Total Pago ao Banco:</span>
-              <strong title="Total pago em parcelas + FGTS utilizado. Corresponde ao final da linha do gráfico.">{formatCurrency(result.estrategiaA.totalParcelas + result.estrategiaA.totalSacadoFGTS)}</strong>
+              <span>Total Desembolsado:<InfoTooltip content={totalDesembolsadoTooltip} /></span>
+              <strong>{formatCurrency(result.estrategiaA.totalParcelas + result.estrategiaA.totalSacadoFGTS)}</strong>
             </p>
             <p className="flex-between">
-              <span>Parcelas pagas (Bolso):</span>
-              <strong title="Soma de todas as parcelas mensais pagas do seu bolso (amortização + juros + taxas + seguros).">{formatCurrency(result.estrategiaA.totalParcelas)}</strong>
+              <span>Parcelas (Saído do Bolso):<InfoTooltip content={parcelasAoBancoTooltip} /></span>
+              <strong>{formatCurrency(result.estrategiaA.totalParcelas)}</strong>
             </p>
             <div style={{ borderTop: '1px solid var(--panel-border)', paddingTop: '8px', marginTop: '4px' }}>
               <p className="flex-between">
@@ -386,7 +428,7 @@ export function FGTSSimulator({ amortizationParams, onWinnerChange }: FGTSSimula
               </p>
             </div>
             <p className="flex-between" style={{ borderTop: '1px solid var(--panel-border)', paddingTop: '8px', marginTop: '4px' }}>
-              <span>Custo Real do Bolso:</span>
+              <span>Custo Real do Bolso:<InfoTooltip content={custoRealDoBolsoTooltip} /></span>
               <strong className="text-accent text-lg">{formatCurrency(result.estrategiaA.custoRealDoBolso)}</strong>
             </p>
             <p className="flex-between">
@@ -411,19 +453,21 @@ export function FGTSSimulator({ amortizationParams, onWinnerChange }: FGTSSimula
           <div className="strategy-card__stats">
             <p className="flex-between">
               <span>Quita em:</span>
-              <strong className="text-warning">{result.estrategiaB.mesesTotal} meses</strong>
+              <strong className="text-warning">
+                {formatMonthsToYears(result.estrategiaB.mesesTotal)} <span style={{ fontWeight: 400, fontSize: '0.85em', opacity: 0.85 }}>({result.estrategiaB.mesesTotal} meses)</span>
+              </strong>
             </p>
             <p className="flex-between">
               <span>Juros totais:</span>
               <strong>{formatCurrency(result.estrategiaB.jurosTotal)}</strong>
             </p>
             <p className="flex-between">
-              <span>Total Pago ao Banco:</span>
-              <strong title="Total pago em parcelas + FGTS utilizado. Corresponde ao final da linha do gráfico.">{formatCurrency(result.estrategiaB.totalParcelas + result.estrategiaB.totalSacadoFGTS)}</strong>
+              <span>Total Desembolsado:<InfoTooltip content={totalDesembolsadoTooltip} /></span>
+              <strong>{formatCurrency(result.estrategiaB.totalParcelas + result.estrategiaB.totalSacadoFGTS)}</strong>
             </p>
             <p className="flex-between">
-              <span>Parcelas pagas (Bolso):</span>
-              <strong title="Soma de todas as parcelas mensais pagas do seu bolso (amortização + juros + taxas + seguros).">{formatCurrency(result.estrategiaB.totalParcelas)}</strong>
+              <span>Parcelas (Saído do Bolso):<InfoTooltip content={parcelasAoBancoTooltip} /></span>
+              <strong>{formatCurrency(result.estrategiaB.totalParcelas)}</strong>
             </p>
             <div style={{ borderTop: '1px solid var(--panel-border)', paddingTop: '8px', marginTop: '4px' }}>
               <p className="flex-between">
@@ -450,7 +494,7 @@ export function FGTSSimulator({ amortizationParams, onWinnerChange }: FGTSSimula
               </p>
             </div>
             <p className="flex-between" style={{ borderTop: '1px solid var(--panel-border)', paddingTop: '8px', marginTop: '4px' }}>
-              <span>Custo Real do Bolso:</span>
+              <span>Custo Real do Bolso:<InfoTooltip content={custoRealDoBolsoTooltip} /></span>
               <strong className="text-warning text-lg">{formatCurrency(result.estrategiaB.custoRealDoBolso)}</strong>
             </p>
             <p className="flex-between">
@@ -541,7 +585,7 @@ export function FGTSSimulator({ amortizationParams, onWinnerChange }: FGTSSimula
 
                 {/* Custo Real do Bolso */}
                 <div className="metric-tile" style={{ background: 'rgba(34, 197, 94, 0.04)', borderColor: 'rgba(34, 197, 94, 0.15)' }}>
-                  <div className="metric-tile__label">Custo Real do Bolso</div>
+                  <div className="metric-tile__label">Custo Real do Bolso<InfoTooltip content={custoRealDoBolsoTooltip} /></div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                     <div>
                       <div style={{ fontSize: '0.72rem', color: '#38bdf8', marginBottom: '2px' }}>Estratégia A</div>

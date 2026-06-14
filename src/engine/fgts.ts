@@ -184,9 +184,10 @@ export function simulateFGTS(
   const totalDepositsA = mesFimA >= mesInicio ? fgtsParams.depositoMensal * (mesFimA - mesInicio) : 0;
   const totalCapitalFGTSA = fgtsParams.saldoInicial + totalDepositsA;
   // Nominal cost: installments + FGTS capital committed − remaining FGTS balance (capital + interest)
+  // This already discounts FGTS interest implicitly: only capital is counted as outflow,
+  // and remaining interest is counted as inflow via saldoFgtsRealA.
   const custoNominalA = parcelasTotalA + totalCapitalFGTSA - saldoFgtsRealA;
-  // Real cost: subtract the FGTS interest that did the "work" (never left user's pocket)
-  const custoRealDoBolsoA = custoNominalA - jurosFGTSUsadosA;
+  const custoRealDoBolsoA = custoNominalA;
 
   // ==========================================
   // ESTRATÉGIA B: Acúmulo e Quitação
@@ -284,7 +285,7 @@ export function simulateFGTS(
   const totalDepositsB = mesEffimB >= mesInicio ? fgtsParams.depositoMensal * (mesEffimB - mesInicio) : 0;
   const totalCapitalFGTSB = fgtsParams.saldoInicial + totalDepositsB;
   const custoNominalB = parcelasTotalB + totalCapitalFGTSB - saldoFgtsRestanteB;
-  const custoRealDoBolsoB = custoNominalB - jurosFGTSUsadosB;
+  const custoRealDoBolsoB = custoNominalB;
 
   // Desconto a valor presente usando o rendimento do FGTS como taxa de oportunidade
   const valorPresenteA = resultadoA.tabela.reduce(

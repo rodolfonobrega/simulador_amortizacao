@@ -46,9 +46,9 @@ export function SimulationStrategiesTab() {
     totalJurosOrig,
     inputJuros,
     simInvestimento,
+    activeSimulationTab, setActiveSimulationTab,
   } = useSimulator();
 
-  const [activeSubTab, setActiveSubTab] = useState<'investimento' | 'fgts'>('investimento');
   const [isEditingParams, setIsEditingParams] = useState(false);
   const [fgtsWinner, setFgtsWinner] = useState<FGTSWinnerInfo | null>(null);
   const handleFgtsWinnerChange = useCallback((info: FGTSWinnerInfo) => setFgtsWinner(info), []);
@@ -93,7 +93,7 @@ export function SimulationStrategiesTab() {
       </div>
 
       {/* 2. Card Destaque Superior */}
-      {activeSubTab === 'investimento' && (
+      {activeSimulationTab === 'investimento' && (
         <div className="panel" style={{ padding: '24px', display: 'flex', alignItems: 'center', gap: '32px', borderLeft: '4px solid #10b981' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1 }}>
             <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -126,7 +126,7 @@ export function SimulationStrategiesTab() {
         </div>
       )}
 
-      {activeSubTab === 'fgts' && fgtsWinner && (
+      {activeSimulationTab === 'fgts' && fgtsWinner && (
         <div className="panel" style={{ padding: '24px', display: 'flex', alignItems: 'center', gap: '32px', borderLeft: `4px solid ${fgtsWinner.accent}` }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1 }}>
             <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: fgtsWinner.winnerIsA ? 'rgba(56,189,248,0.1)' : 'rgba(251,191,36,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -160,53 +160,53 @@ export function SimulationStrategiesTab() {
       {/* 3. Sub-tabs */}
       <div style={{ display: 'flex', gap: '32px', marginBottom: '24px', borderBottom: '1px solid var(--panel-border)' }}>
         <button 
-          onClick={() => setActiveSubTab('investimento')}
+          onClick={() => setActiveSimulationTab('investimento')}
           style={{
             display: 'inline-flex',
             alignItems: 'center',
             gap: '8px',
             padding: '12px 4px',
             background: 'transparent',
-            color: activeSubTab === 'investimento' ? '#2563eb' : 'var(--text-secondary)',
+            color: activeSimulationTab === 'investimento' ? '#2563eb' : 'var(--text-secondary)',
             border: 'none',
-            borderBottom: activeSubTab === 'investimento' ? '2px solid #2563eb' : '2px solid transparent',
-            fontWeight: activeSubTab === 'investimento' ? 600 : 500,
+            borderBottom: activeSimulationTab === 'investimento' ? '2px solid #2563eb' : '2px solid transparent',
+            fontWeight: activeSimulationTab === 'investimento' ? 600 : 500,
             cursor: 'pointer',
             fontSize: '0.9rem',
             marginBottom: '-1px'
           }}
         >
-          <TrendingUp size={16} color={activeSubTab === 'investimento' ? '#2563eb' : 'currentColor'} />
+          <TrendingUp size={16} color={activeSimulationTab === 'investimento' ? '#2563eb' : 'currentColor'} />
           <span>Comparação: Investimento</span>
         </button>
         <button 
-          onClick={() => setActiveSubTab('fgts')}
+          onClick={() => setActiveSimulationTab('fgts')}
           style={{
             display: 'inline-flex',
             alignItems: 'center',
             gap: '8px',
             padding: '12px 4px',
             background: 'transparent',
-            color: activeSubTab === 'fgts' ? '#10b981' : 'var(--text-secondary)',
+            color: activeSimulationTab === 'fgts' ? '#10b981' : 'var(--text-secondary)',
             border: 'none',
-            borderBottom: activeSubTab === 'fgts' ? '2px solid #10b981' : '2px solid transparent',
-            fontWeight: activeSubTab === 'fgts' ? 600 : 500,
+            borderBottom: activeSimulationTab === 'fgts' ? '2px solid #10b981' : '2px solid transparent',
+            fontWeight: activeSimulationTab === 'fgts' ? 600 : 500,
             cursor: 'pointer',
             fontSize: '0.9rem',
             marginBottom: '-1px'
           }}
         >
-          <PiggyBank size={16} color={activeSubTab === 'fgts' ? '#10b981' : 'currentColor'} />
+          <PiggyBank size={16} color={activeSimulationTab === 'fgts' ? '#10b981' : 'currentColor'} />
           <span>Simulador de Estratégias do FGTS</span>
         </button>
       </div>
 
       {/* Conteúdo das Sub-tabs */}
-      {activeSubTab === 'fgts' && (
+      {activeSimulationTab === 'fgts' && (
         <FGTSSimulator amortizationParams={params} jurosSemAportes={totalJurosOrig} onWinnerChange={handleFgtsWinnerChange} />
       )}
 
-      {activeSubTab === 'investimento' && (
+      {activeSimulationTab === 'investimento' && (
         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' }}>
           
           {/* COLUNA ESQUERDA: Comparação de Estratégias */}
