@@ -85,24 +85,22 @@ function AppContent() {
   return (
     <AppLayout>
       {/* 1. VISÃO GERAL */}
-      {activeMainTab === 'visao_geral' && (
-        <>
-          <OverviewMetrics />
-          <div className="dashboard-two-col-layout">
-            <StrategySection />
-            <SummarySection />
-          </div>
-          <EvolutionTable />
-        </>
-      )}
+      <div style={{ display: activeMainTab === 'visao_geral' ? undefined : 'none' }}>
+        <OverviewMetrics />
+        <div className="dashboard-two-col-layout">
+          <StrategySection />
+          <SummarySection />
+        </div>
+        <EvolutionTable />
+      </div>
 
       {/* 2. SIMULAÇÃO E ESTRATÉGIAS */}
-      {activeMainTab === 'simulacao' && (
+      <div style={{ display: activeMainTab === 'simulacao' ? undefined : 'none' }}>
         <SimulationStrategiesTab />
-      )}
+      </div>
 
-      {/* 1. PARÂMETROS */}
-      {activeMainTab === 'parametros' && (
+      {/* 3. PARÂMETROS */}
+      <div style={{ display: activeMainTab === 'parametros' ? undefined : 'none' }}>
         <div className="dashboard-two-col-layout" style={{ alignItems: 'stretch' }}>
           {/* Parâmetros do Financiamento */}
           <div className="panel">
@@ -115,7 +113,7 @@ function AppContent() {
               <div className="input-group">
                 <label>
                   Valor Financiado
-                  <InfoTooltip content="O valor total financiado junto à instituição financeira (excluindo a entrada)." />
+                  <InfoTooltip content="Quanto você pegou emprestado do banco. Não inclui a entrada." />
                 </label>
                 <CurrencyInput
                   className="input-control"
@@ -128,7 +126,7 @@ function AppContent() {
                 <div className="input-group">
                   <label>
                     Prazo (meses)
-                    <InfoTooltip content="Número total de prestações mensais contratadas." />
+                    <InfoTooltip content="Quantas parcelas tem o seu financiamento." />
                   </label>
                   <input
                     type="text"
@@ -140,7 +138,7 @@ function AppContent() {
                 <div className="input-group">
                   <label>
                     Taxa de Juros
-                    <InfoTooltip content="Taxa de juros nominal contratada (a.a. ou a.m.)." />
+                    <InfoTooltip content="Juros do seu contrato. Pode ser ao ano (a.a.) ou ao mês (a.m.)." />
                   </label>
                   <div className="flex-center gap-xs">
                     <input
@@ -170,7 +168,7 @@ function AppContent() {
               <div className="input-group">
                 <label>
                   Valor do Imóvel (Avaliação)
-                  <InfoTooltip content="Valor de avaliação oficial do imóvel definido pela instituição financeira." />
+                  <InfoTooltip content="Valor pelo qual o banco avaliou o imóvel." />
                 </label>
                 <CurrencyInput
                   className="input-control"
@@ -182,7 +180,7 @@ function AppContent() {
               <div className="input-group">
                 <label>
                   Sistema de Amortização
-                  <InfoTooltip content="SAC tem parcelas decrescentes e amortização constante. PRICE tem parcelas constantes e amortizações crescentes." />
+                  <InfoTooltip content="SAC: parcelas diminuem todo mês. PRICE: parcelas fixas do início ao fim." />
                 </label>
                 <select 
                   className="input-control" 
@@ -198,7 +196,7 @@ function AppContent() {
                 <div className="input-group">
                   <label>
                     TR Estimada (% a.m.)
-                    <InfoTooltip content="Taxa Referencial média estimada para correção monetária mensal do saldo devedor." />
+                    <InfoTooltip content="Correção mensal aplicada ao saldo devedor. Contratos CEF/BB geralmente usam TR." />
                   </label>
                   <input
                     type="text"
@@ -210,7 +208,7 @@ function AppContent() {
                 <div className="input-group">
                   <label>
                     Tarifa Admin. Mensal
-                    <InfoTooltip content="Tarifa de administração mensal cobrada no boleto do financiamento." />
+                    <InfoTooltip content="Taxa fixa cobrada todo mês no boleto, além dos juros." />
                   </label>
                   <CurrencyInput
                     className="input-control"
@@ -231,7 +229,7 @@ function AppContent() {
                   />
                   <label htmlFor="segurosToggle" className="checkbox-label">
                     Incluir Seguros habitacionais obrigatórios (MIP/DFI)
-                    <InfoTooltip content="Seguros de Morte e Invalidez Permanente (MIP) e Danos Físicos ao Imóvel (DFI) obrigatórios por lei." />
+                    <InfoTooltip content="Seguros obrigatórios cobrados na parcela: MIP (morte/invalidez) e DFI (danos ao imóvel)." />
                   </label>
                 </div>
               </div>
@@ -240,7 +238,7 @@ function AppContent() {
                 <div className="input-group">
                   <label>
                     Sua Idade
-                    <InfoTooltip content="A idade influi diretamente na alíquota do seguro MIP cobrado na parcela." />
+                    <InfoTooltip content="Quanto mais velho, maior o seguro MIP na parcela." />
                   </label>
                   <input
                     type="text"
@@ -306,7 +304,7 @@ function AppContent() {
             </div>
           </div>
         </div>
-      )}
+      </div>
 
 
       {/* Toast Notification */}

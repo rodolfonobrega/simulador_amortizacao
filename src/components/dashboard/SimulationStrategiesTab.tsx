@@ -202,11 +202,11 @@ export function SimulationStrategiesTab() {
       </div>
 
       {/* Conteúdo das Sub-tabs */}
-      {activeSimulationTab === 'fgts' && (
+      <div style={{ display: activeSimulationTab === 'fgts' ? undefined : 'none' }}>
         <FGTSSimulator amortizationParams={params} jurosSemAportes={totalJurosOrig} onWinnerChange={handleFgtsWinnerChange} />
-      )}
+      </div>
 
-      {activeSimulationTab === 'investimento' && (
+      <div style={{ display: activeSimulationTab === 'investimento' ? undefined : 'none' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' }}>
           
           {/* COLUNA ESQUERDA: Comparação de Estratégias */}
@@ -488,7 +488,7 @@ export function SimulationStrategiesTab() {
           </div>
 
         </div>
-      )}
+      </div>
 
     </div>
   );

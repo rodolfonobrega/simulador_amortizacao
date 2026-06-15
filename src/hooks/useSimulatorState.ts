@@ -854,6 +854,7 @@ export function useSimulatorState() {
           orig ? fmt(orig.juros) : '',
           orig ? fmt(orig.seguroMIP) : '',
           orig ? fmt(orig.seguroDFI) : '',
+          orig ? fmt(orig.tarifaAdmin || 0) : '',
           '',
           '',
           '',
@@ -872,64 +873,6 @@ export function useSimulatorState() {
     URL.revokeObjectURL(url);
   };
 
-  const exportFGTS = () => {
-    const ft = quickSimulationResult.tabela;
-    if (!ft || ft.length === 0) return;
-
-    const sep = ';';
-    const fmt = (v: number) => v.toFixed(2).replace('.', ',');
-
-    const headers = [
-      'Mês', 'Saldo Inicial Corrigido', 'Amortização', 'Juros',
-      'Seguro MIP', 'Seguro DFI', 'Tarifa Admin', 'Parcela Total',
-      'Amort. Extra', 'Desembolso Acumulado', 'Saldo Devedor Final', 'Status'
-    ].join(sep);
-
-    let cumPaid = 0;
-    const rows = ft.map(row => {
-      cumPaid += row.parcelaTotal + (row.aporteExtra || 0);
-      const status = row.pagaManualmente
-        ? 'Parcela Paga Manualmente'
-        : (row.aporteExtra ? 'Com Amortizacao' : 'Normal');
-      return [
-        row.mes,
-        fmt(row.saldoInicialCorrigido || 0),
-        fmt(row.amortizacao),
-        fmt(row.juros),
-        fmt(row.seguroMIP),
-        fmt(row.seguroDFI),
-        fmt(row.tarifaAdmin),
-        fmt(row.parcelaTotal),
-        fmt(row.aporteExtra || 0),
-        fmt(cumPaid),
-        fmt(row.saldoDevedorFinal),
-        status,
-      ].join(sep);
-    });
-
-    const csv = [headers, ...rows, ...elimRows].join('\n');
-    const bom = '\uFEFF';
-    const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `simulacao_fgts_${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const elimRows = (quickSimulationResult.eliminadas ?? [])
-    .filter(e => e.motivo !== 'PAGAMENTO')
-    .sort((a, b) => a.mesOriginal - b.mesOriginal)
-    .map(elim => {
-      return [
-        elim.mesOriginal,
-        '', '', '', '', '', '', '',
-        '',
-        '',
-        `Eliminada (amort. mês ${elim.eliminadaNoMes})`,
-      ].join(';');
-    });
 
   return {
     rawParams, setRawParams,
@@ -1020,6 +963,5 @@ export function useSimulatorState() {
     handleLoadProfile,
     handleClearAllAportes,
     exportToCSV,
-    exportFGTS
   };
 }
