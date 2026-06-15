@@ -37,7 +37,7 @@ function formatMonthsToYears(months: number): string {
 }
 
 const custoRealDoBolsoTooltip =
-  'Parcelas + FGTS comprometido, descontando o saldo de FGTS que sobrou. Mede o custo econômico real de cada estratégia. Quanto menor, melhor.';
+  'Parcelas pagas ao banco + FGTS sacado para amortização. Não conta o rendimento do FGTS. Quanto menor, melhor.';
 
 const totalDesembolsadoTooltip =
   'Tudo que foi para o banco: parcelas mensais + FGTS sacado e usado como amortização.';
