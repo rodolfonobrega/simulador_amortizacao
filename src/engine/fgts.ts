@@ -186,7 +186,7 @@ export function simulateFGTS(
   // Nominal cost: installments + FGTS capital committed − remaining FGTS balance (capital + interest)
   // This already discounts FGTS interest implicitly: only capital is counted as outflow,
   // and remaining interest is counted as inflow via saldoFgtsRealA.
-  const custoNominalA = parcelasTotalA + totalCapitalFGTSA - saldoFgtsRealA;
+  const custoNominalA = parcelasTotalA + totalSacadoDepositosA;
   const custoRealDoBolsoA = custoNominalA;
 
   // ==========================================
@@ -284,7 +284,7 @@ export function simulateFGTS(
   const mesEffimB = mesQuitacaoB !== null ? mesQuitacaoB : mesFimB;
   const totalDepositsB = mesEffimB >= mesInicio ? fgtsParams.depositoMensal * (mesEffimB - mesInicio) : 0;
   const totalCapitalFGTSB = fgtsParams.saldoInicial + totalDepositsB;
-  const custoNominalB = parcelasTotalB + totalCapitalFGTSB - saldoFgtsRestanteB;
+  const custoNominalB = parcelasTotalB + totalSacadoDepositosB;
   const custoRealDoBolsoB = custoNominalB;
 
   // Desconto a valor presente usando o rendimento do FGTS como taxa de oportunidade
