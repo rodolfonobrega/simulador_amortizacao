@@ -66,6 +66,11 @@ export function EvolutionTable() {
                     <td>{formatCurrency(row.tarifaAdmin)}</td>
                     <td className="text-success font-bold">
                       {row.aporteExtra ? formatCurrency(row.aporteExtra) : '—'}
+                      {row.jurosAporte ? (
+                        <span className="text-secondary" style={{ display: 'block', fontSize: '0.75rem', fontWeight: 400 }}>
+                          inclui {formatCurrency(row.jurosAporte)} de juros ({row.diasJurosAporte} dias)
+                        </span>
+                      ) : null}
                     </td>
                     <td className="text-info font-semibold">{formatCurrency(row.cumPaid)}</td>
                     <td className="font-semibold">{formatCurrency(row.saldoDevedorFinal)}</td>

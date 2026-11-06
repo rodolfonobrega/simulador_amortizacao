@@ -28,7 +28,11 @@ export interface AmortizationRow {
   tarifaAdmin: number;
   parcelaTotal: number;
   saldoDevedorFinal: number;
+  /** Dinheiro total desembolsado no aporte (já inclui jurosAporte). */
   aporteExtra?: number;
+  /** Juros diários cobrados sobre o aporte; não abatem o saldo devedor. */
+  jurosAporte?: number;
+  diasJurosAporte?: number;
   tipoReducao?: ReductionType;
   pagaManualmente?: boolean;
 }
@@ -47,11 +51,43 @@ export interface AmortizationParams {
   idadeInicial: number;
   aportes: ExtraPayment[];
   parcelasPagas?: number[];
+  /** Dia do mês do vencimento (1-31). Com dataSimulacao, ativa os juros diários do aporte. */
+  diaVencimento?: number;
+  /** Data da simulação (AAAA-MM-DD): o mês 1 é o aporte feito nesta data. */
+  dataSimulacao?: string;
 }
 
 export interface AmortizationResult {
   tabela: AmortizationRow[];
   eliminadas: EliminatedInstallment[];
+}
+
+const diasNoMes = (ano: number, mes0: number) => new Date(Date.UTC(ano, mes0 + 1, 0)).getUTCDate();
+
+/**
+ * Dias corridos entre o último vencimento e a data do aporte do mês `mes`.
+ * A data do aporte é dataSimulacao + (mes - 1) meses, no mesmo dia do mês.
+ * Aporte no dia do vencimento resulta em 0 dias (premissa não verificada).
+ */
+export function calcularDiasJurosAporte(
+  dataSimulacao: string | undefined,
+  diaVencimento: number | undefined,
+  mes: number
+): number {
+  if (!dataSimulacao || !diaVencimento) return 0;
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dataSimulacao);
+  if (!m) return 0;
+  const ano = Number(m[1]);
+  const mes0 = Number(m[2]) - 1 + (mes - 1);
+  const dia = Math.min(Number(m[3]), diasNoMes(ano, mes0));
+  const aporte = Date.UTC(ano, mes0, dia);
+  const venc = (offset: number) => {
+    const ref = new Date(Date.UTC(ano, mes0 + offset, 1));
+    const d = Math.min(diaVencimento, diasNoMes(ref.getUTCFullYear(), ref.getUTCMonth()));
+    return Date.UTC(ref.getUTCFullYear(), ref.getUTCMonth(), d);
+  };
+  const ultimo = venc(0) <= aporte ? venc(0) : venc(-1);
+  return Math.round((aporte - ultimo) / 86400000);
 }
 
 export function getAlitquotaMIP(idade: number): number {
@@ -141,6 +177,8 @@ export function generateAmortizationTable(params: AmortizationParams): Amortizat
 
     // Group extra payments for this month
     let valorAporteAplicado = 0;
+    let jurosAporte = 0;
+    let diasJurosAporte = 0;
     let tipoReducao: ReductionType | undefined;
     const aportesDoMes = params.aportes.filter(a => a.mes === mes && a.valor > 0);
     if (aportesDoMes.length > 0) {
@@ -152,7 +190,10 @@ export function generateAmortizationTable(params: AmortizationParams): Amortizat
         .reduce((acc, a) => acc + a.valor, 0);
       const valorSolicitado = aportePrazo + aporteParcela;
       tipoReducao = aportePrazo > 0 ? 'PRAZO' : 'PARCELA';
-      valorAporteAplicado = Math.min(valorSolicitado, saldoCorrigido);
+      // Juros diários do aporte saem do valor aportado; só o restante abate o saldo.
+      diasJurosAporte = calcularDiasJurosAporte(params.dataSimulacao, params.diaVencimento, mes);
+      jurosAporte = Math.min(valorSolicitado, valorSolicitado * (taxaJurosMensal / 30) * diasJurosAporte);
+      valorAporteAplicado = Math.min(valorSolicitado - jurosAporte, saldoCorrigido);
     }
 
     // Compute REGULAR installment (before any reduction)
@@ -279,7 +320,9 @@ export function generateAmortizationTable(params: AmortizationParams): Amortizat
       tarifaAdmin: params.tarifaAdministracao,
       parcelaTotal,
       saldoDevedorFinal,
-      aporteExtra: valorAporteAplicado > 0 ? valorAporteAplicado : undefined,
+      aporteExtra: valorAporteAplicado > 0 ? valorAporteAplicado + jurosAporte : undefined,
+      jurosAporte: jurosAporte > 0 ? jurosAporte : undefined,
+      diasJurosAporte: valorAporteAplicado > 0 && diasJurosAporte > 0 ? diasJurosAporte : undefined,
       tipoReducao,
       pagaManualmente: parcelaPagaManualmente || undefined,
     });

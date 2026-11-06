@@ -8,7 +8,8 @@ import { SummarySection } from './components/dashboard/SummarySection';
 import { EvolutionTable } from './components/dashboard/EvolutionTable';
 import { SimulationStrategiesTab } from './components/dashboard/SimulationStrategiesTab';
 import { formatCurrency } from './utils/formatters';
-import { type InterestRateType, type AmortizationSystem, convertInterestRate } from './engine/amortization';
+import { type InterestRateType, type AmortizationSystem, convertInterestRate, calcularDiasJurosAporte } from './engine/amortization';
+import { hojeISO } from './hooks/useSimulatorState';
 import { 
   CheckCircle,
   AlertCircle,
@@ -176,6 +177,55 @@ function AppContent() {
                   onChange={val => setRawParams((p: any) => ({ ...p, valorImovel: val }))}
                 />
               </div>
+
+              <div className="grid-cols-2" style={{ gap: '12px' }}>
+                <div className="input-group">
+                  <label>
+                    Dia do Vencimento
+                    <InfoTooltip content="Dia do mês em que vence a parcela. Junto com a data da simulação, define quantos dias de juros o banco cobra sobre o aporte do mês 1." />
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={31}
+                    className="input-control"
+                    value={rawParams.diaVencimento ?? ''}
+                    onChange={e => {
+                      const n = parseInt(e.target.value, 10);
+                      setRawParams((p: any) => ({ ...p, diaVencimento: Number.isFinite(n) ? Math.min(31, Math.max(1, n)) : undefined }));
+                    }}
+                  />
+                </div>
+                <div className="input-group">
+                  <label>
+                    Data da Simulação
+                    <InfoTooltip content="Dia em que o aporte seria feito (mês 1). Aportes de meses seguintes usam o mesmo dia do mês." />
+                  </label>
+                  <div className="flex-center gap-xs">
+                    <input
+                      type="date"
+                      className="input-control"
+                      value={rawParams.dataSimulacao ?? ''}
+                      onChange={e => setRawParams((p: any) => ({ ...p, dataSimulacao: e.target.value }))}
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() => setRawParams((p: any) => ({ ...p, dataSimulacao: hojeISO() }))}
+                    >
+                      Hoje
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <span className="input-hint">
+                {(() => {
+                  const dias = calcularDiasJurosAporte(rawParams.dataSimulacao, rawParams.diaVencimento, 1);
+                  return rawParams.dataSimulacao && rawParams.diaVencimento
+                    ? `Aporte no mês 1: ${dias} dia${dias === 1 ? '' : 's'} de juros desde o último vencimento (cobrados sobre o aporte).`
+                    : 'Informe vencimento e data para cobrar juros diários no aporte.';
+                })()}
+              </span>
 
               <div className="input-group">
                 <label>

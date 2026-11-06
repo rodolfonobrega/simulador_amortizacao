@@ -88,6 +88,14 @@ export interface SavedProfile {
 const STORAGE_KEY = 'simulador-amortizacao-state-v2';
 const PROFILES_KEY = 'simulador-amortizacao-profiles-v2';
 
+// Data local (não UTC): toISOString() viraria "amanhã" à noite no Brasil.
+export function hojeISO(): string {
+  const d = new Date();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${mm}-${dd}`;
+}
+
 export const defaultRawParams = {
   valorFinanciado: 300000,
   prazoMeses: 420,
@@ -99,6 +107,8 @@ export const defaultRawParams = {
   aliquotaDFI: 0.000066,
   valorImovel: 380000,
   idadeInicial: 31,
+  diaVencimento: 25,
+  dataSimulacao: hojeISO(),
 };
 
 export const defaultInvestimento: InvestmentParams = { valor: 10000, taxa: 0.8, taxaTipo: 'AM', meses: 12 };
@@ -158,7 +168,7 @@ function getInitialState(): SimulatorState {
   const loaded = loadJson<any>(STORAGE_KEY, null);
   if (!loaded) return defaultSimulatorState;
 
-  const rawParams = loaded.rawParams || {
+  const rawParams = loaded.rawParams ? { ...defaultRawParams, ...loaded.rawParams } : {
     valorFinanciado: loaded.params?.valorFinanciado ?? defaultRawParams.valorFinanciado,
     prazoMeses: loaded.params?.prazoMeses ?? defaultRawParams.prazoMeses,
     taxaJuros: loaded.params?.taxaJuros ?? defaultRawParams.taxaJuros,
@@ -169,6 +179,8 @@ function getInitialState(): SimulatorState {
     aliquotaDFI: loaded.params?.aliquotaDFI ?? defaultRawParams.aliquotaDFI,
     valorImovel: loaded.params?.valorImovel ?? defaultRawParams.valorImovel,
     idadeInicial: loaded.params?.idadeInicial ?? defaultRawParams.idadeInicial,
+    diaVencimento: defaultRawParams.diaVencimento,
+    dataSimulacao: defaultRawParams.dataSimulacao,
   };
 
   let strategies: StrategyRule[] = (loaded.strategies || []).filter((strategy: StrategyRule) => !strategy.id.startsWith('mock-'));
@@ -817,7 +829,7 @@ export function useSimulatorState() {
 
     const headers = [
       'Mês', 'Status', 'Parcela Total', 'Amortização', 'Juros',
-      'Seguro MIP', 'Seguro DFI', 'Tarifa Admin', 'Amort. Extra',
+      'Seguro MIP', 'Seguro DFI', 'Tarifa Admin', 'Amort. Extra', 'Juros do Aporte',
       'Desembolso Acumulado', 'Saldo Devedor Final', 'Você Pagou (VP)'
     ].join(sep);
 
@@ -834,6 +846,7 @@ export function useSimulatorState() {
         fmt(row.seguroDFI),
         fmt(row.tarifaAdmin || 0),
         fmt(row.aporteExtra || 0),
+        fmt(row.jurosAporte || 0),
         fmt(cumPaid),
         fmt(row.saldoDevedorFinal),
         '',
@@ -855,6 +868,7 @@ export function useSimulatorState() {
           orig ? fmt(orig.seguroMIP) : '',
           orig ? fmt(orig.seguroDFI) : '',
           orig ? fmt(orig.tarifaAdmin || 0) : '',
+          '',
           '',
           '',
           '',
